@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Weather</title>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      background: linear-gradient(135deg, #6ddfe7, #66a6ff);
+    }
+
+    .box {
+      background: rgba(255, 255, 255, 0.9);
+      padding: 25px 30px;
+      border-radius: 15px;
+      width: 320px;
+      text-align: center;
+      box-shadow: 0 4px 25px rgba(0,0,0,0.25);
+      animation: fadeIn 1.2s ease-in-out;
+    }
+
+    h2 {
+      margin: 0 0 15px;
+      color: #333;
+    }
+
+    input {
+      width: 90%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #aaa;
+      font-size: 16px;
+      margin-bottom: 12px;
+      outline: none;
+      transition: 0.3s;
+    }
+
+    input:focus {
+      border-color: #66a6ff;
+      box-shadow: 0 0 8px rgba(102,166,255,0.4);
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #66a6ff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #5595ff;
+      transform: scale(1.03);
+    }
+
+    #result {
+      margin-top: 15px;
+      font-size: 18px;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="box">
+    <h2> Weather Search</h2>
+
+    <input type="text" id="country" placeholder="Enter country name (Ex: India)">
+    <button onclick="searchWeather()">Get Weather</button>
+
+    <div id="result">Enter a country to get weather </div>
+  </div>
+
+  <script>
+    // 1. Convert Country → Latitude & Longitude
+    function searchWeather() {
+      let country = document.getElementById("country").value.trim();
+      if (country === "") {
+        document.getElementById("result").innerText = "Please enter a country.";
+        return;
+      }
+
+      document.getElementById("result").innerText = "Fetching weather...";
+
+      fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${country}`)
+        .then(res => res.json())
+        .then(data => {
+          if (!data.results || data.results.length === 0) {
+            document.getElementById("result").innerText = "Country not found ❌";
+            return;
+          }
+
+          let info = data.results[0];
+          getWeather(info.latitude, info.longitude, info.name);
+        })
+        .catch(() => {
+          document.getElementById("result").innerText = "Error finding location!";
+        });
+    }
+
+    // 2. Fetch Current Temperature Based on Coordinates
+    function getWeather(lat, lon, countryName) {
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&timezone=auto`)
+        .then(res => res.json())
+        .then(data => {
+          let w = data.current_weather;
+
+          document.getElementById("result").innerHTML = `
+            <h3>${countryName}</h3>
+            🌡 Temperature: <b>${w.temperature} °C</b><br>
+             Wind Speed: <b>${w.windspeed} km/h</b><br>
+             Time: ${w.time}
+          `;
+        })
+        .catch(() => {
+          document.getElementById("result").innerText = "Error fetching weather!";
+        });
+    }
+  </script>
+
+</body>
+</html>
